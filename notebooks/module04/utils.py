@@ -27,21 +27,22 @@ def _calculate_centroid(model, wordlist):
     return centr/len(wordlist)
 
 def _keep_only_model_words(model, words):
-    aux = [ word for word in words if word in model.wv.vocab.keys()]
+    aux = [ word for word in words if word in model.wv.index_to_key]
     return aux
 
 def _get_word_freq(model, word):
-    if word in model.wv.vocab:
-        wm = model.wv.vocab[word]
-        return [word, wm.count, wm.index]
+    if word in model.wv.index_to_key:
+        wm = model.wv.key_to_index[word]
+        return [word,
+                model.wv.get_vecattr(word, "count"),
+                model.wv.key_to_index[word]]
     return None
 
 def _get_model_min_max_rank(model):
     minF = 999999
     maxF = -1
-    for w in model.wv.vocab:
-        wm = model.wv.vocab[w] #wm.count, wm.index
-        rank = wm.index
+    for w in model.wv.index_to_key:
+        rank = model.wv.key_to_index[w]
         if(minF>rank):
             minF = rank
         if(maxF<rank):
@@ -115,7 +116,7 @@ def calculate_biased_words(model, targetset1, targetset2, stdevs,
     engine = inflect.engine()
     toremove = targetset1 + targetset2 + [engine.plural(w) for w in targetset1] + [engine.plural(w) for w in targetset2]
     if(words is None):
-        words = [w for w in model.wv.vocab.keys() if w not in toremove]
+        words = [w for w in model.wv.index_to_key if w not in toremove]
 
     # Calculate centroids 
     tset1_centroid = _calculate_centroid(model, tset1)
